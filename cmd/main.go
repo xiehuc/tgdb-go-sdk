@@ -9,6 +9,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -24,7 +25,16 @@ var (
 	host = flag.String("h", "", "host")
 	port = flag.Int("P", 7687, "Port")
 	db   = flag.String("db", "", "database name")
+
+	interactive bool
 )
+
+func init() {
+	fi, _ := os.Stdin.Stat()
+	if (fi.Mode() & os.ModeCharDevice) != 0 {
+		interactive = true
+	}
+}
 
 func read(cmds chan string) {
 	scan := bufio.NewScanner(os.Stdin)
@@ -32,6 +42,13 @@ func read(cmds chan string) {
 		line := scan.Text()
 		line = strings.TrimSpace(line)
 		cmds <- line
+	}
+	close(cmds)
+}
+
+func prompt() {
+	if interactive {
+		fmt.Print("cypher> ")
 	}
 }
 
@@ -46,11 +63,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer s.Close()
 
-	log.Println("connection successful")
+	if interactive {
+		log.Println("connection successful")
+	}
 
 	cmds := make(chan string, 24)
-	fmt.Print("cypher> ")
+	prompt()
+	enc := json.NewEncoder(os.Stdout)
 	go read(cmds)
 
 	for line := range cmds {
@@ -58,12 +79,13 @@ func main() {
 			fmt.Fprint(os.Stdout, "\n")
 			continue
 		}
-		all, m, err := s.Cypher(line, nil)
+		all, _, err := s.Cypher(line, nil)
 		if err != nil {
-			fmt.Fprint(os.Stderr, err, "\n")
+			log.Println(err)
 		} else {
-			fmt.Fprint(os.Stdout, all, m, "\n")
+			_ = enc.Encode(all)
 		}
-		fmt.Print("cypher> ")
+		prompt()
 	}
+
 }
