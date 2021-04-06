@@ -16,7 +16,7 @@ import (
 	"os"
 	"strings"
 
-	"git.code.oa.com/opdd/tgdb-go-sdk"
+	"github.com/xiehuc/tgdb-go-sdk"
 )
 
 var (

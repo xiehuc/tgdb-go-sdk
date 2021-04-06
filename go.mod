@@ -1,4 +1,4 @@
-module git.code.oa.com/opdd/tgdb-go-sdk
+module github.com/xiehuc/tgdb-go-sdk
 
 go 1.16
 
